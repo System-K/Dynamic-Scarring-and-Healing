@@ -34,15 +34,29 @@ endif()
 # set(OUTPUT_FOLDER "C:/path/to/any/folder")
 
 # Setup your SKSE plugin as an SKSE plugin!
-find_package(CommonLibSSE CONFIG REQUIRED)
-add_commonlibsse_plugin(${PROJECT_NAME} SOURCES 
+# SKSE-Hotfixes: build against CommonLibSSE-NG 11 via add_subdirectory (Address Library v5, Skyrim 1.7.104)
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(ENABLE_SKYRIM_SE ON CACHE BOOL "" FORCE)
+set(ENABLE_SKYRIM_AE ON CACHE BOOL "" FORCE)
+set(ENABLE_SKYRIM_VR ON CACHE BOOL "" FORCE)
+set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
+add_subdirectory("$ENV{COMMONLIB_SSE_FOLDER}" "${CMAKE_CURRENT_BINARY_DIR}/_deps/clib-build")
+get_target_property(COMMONLIB_SRC_DIR CommonLibSSE SOURCE_DIR)
+include("${COMMONLIB_SRC_DIR}/cmake/CommonLibSSE.cmake")
+# SKSE-Hotfixes: sources include "Logger.h" / "PluginDetection.h" but the files are logger.h / pluginDetection.h (case-sensitive on Linux) -> include aliases
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/include_alias/Logger.h" "#include \"${CMAKE_CURRENT_SOURCE_DIR}/logger.h\"\n")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/include_alias/PluginDetection.h" "#include \"${CMAKE_CURRENT_SOURCE_DIR}/pluginDetection.h\"\n")
+add_commonlibsse_plugin(${PROJECT_NAME} SOURCES
 plugin.cpp
 pluginDetection.cpp
 overlays.cpp
 mcm.cpp
 logger.cpp
 random.cpp
+NAME "DynamicScarringAndHealing" AUTHOR "endermannnn" VERSION 0.0.1
 ) # <--- specifies plugin.cpp
+target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/include_alias")
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_23) # <--- use C++23 standard
 target_precompile_headers(${PROJECT_NAME} PRIVATE PCH.h) # <--- PCH.h is required!
 
